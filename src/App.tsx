@@ -1,7 +1,10 @@
+import { Routes } from "./routes";
+
 export function App() {
   return (
     <div>
-      <h1 className="text-3xl text-gray-200">Refund</h1>
+      {/* Routes é chamado aqui e não no main.tsx para eu conseguir dividir qual caminho de rotas o usuário vai poder acessar */}
+      <Routes />
     </div>
   )
 }
