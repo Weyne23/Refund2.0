@@ -28,4 +28,4 @@ export const CATEGORIES = {
 }
 
 //Aqui retornar as keys da categoria
-export const CATEGORIE_KEYS = Object.keys(CATEGORIES) as Array<keyof typeof CATEGORIES>
+export const CATEGORIES_KEYS = Object.keys(CATEGORIES) as Array<keyof typeof CATEGORIES>
