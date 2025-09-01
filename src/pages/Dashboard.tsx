@@ -2,26 +2,42 @@ import { useState } from "react"
 
 import searchSvg from "../assets/search.svg"
 import { CATEGORIES } from "../utils/categories";
+import { formatCurrency } from "../utils/formatCurrency";
 
 import { Input } from "../Components/Input"
 import { Button } from "../Components/Button";
-import { RefundItem } from "../Components/RefundItem";
+import { RefundItem, type RefundItemProps } from "../Components/RefundItem";
+import { Pagination } from "../Components/Pagination";
 
-const REFFUND_EXEMPLE = {
+const REFUND_EXEMPLE = {
     id: "123",
     name: "Weyne",
     category: "Transporte",
-    amount: "34.50",
+    amount: formatCurrency(34.5),
     categoryImg: CATEGORIES["transport"].icon
 }
 
 export function Dashboard() {
     const [name, setName] = useState("");
+    const [page, setPage] = useState(1);
+    const [totalOfPage, setTotalOfPage] = useState(10);
+    const [refunds, setRefunds] = useState<RefundItemProps[]>([REFUND_EXEMPLE]);
 
     function fetchRefunds(e: React.FormEvent) {
         e.preventDefault();
         console.log(name);
-    }   
+    }
+
+    function handlePagination(action: "next" | "previous") {
+        setPage((prevPage) => {
+            if(action === "next" && prevPage < totalOfPage)
+                return prevPage + 1;
+            else if(action === "previous" && prevPage > 1)
+                return prevPage - 1;
+
+            return prevPage
+        })
+    }
 
     return (
         <div className="bg-gray-500 rounded-xl p-10 md:min-w-[768px]">
@@ -33,9 +49,20 @@ export function Dashboard() {
                 </Button>
             </form>
 
-            <div>
-                <RefundItem data={REFFUND_EXEMPLE} />
+            <div className="my-6 flex flex-col gap-4 max-h-[342px] overflow-y-scroll">
+                {
+                    refunds.map((item) => (
+                        <RefundItem key={item.id} data={item} href={`/refund/${item.id}`}/>
+                    ))
+                }
             </div>
+
+            <Pagination 
+                current={page}
+                total={totalOfPage}
+                onPrevious={() => handlePagination("previous")}
+                onNext={() => handlePagination("next")}
+            />
         </div>
     )
 }
