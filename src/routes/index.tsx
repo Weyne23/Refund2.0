@@ -32,7 +32,7 @@ export function Routes() {
     }
 
     return (
-        //e aqui que fica meu BrowserRouter pra eu conseguir dividir os acessos do meu usuário a partir dos acessos do mesmo
+        //e aqui que fica meu BrowserRouter para eu conseguir dividir os acessos do meu usuário a partir dos acessos do mesmo
         <BrowserRouter>
             <Route />
             {/* {Route() /** Também funciona*/}
