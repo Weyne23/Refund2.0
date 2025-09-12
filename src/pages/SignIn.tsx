@@ -8,6 +8,8 @@ import { AxiosError } from "axios";
 
 import { api } from "../services/api";
 
+import { useAuth } from "../hooks/useAuth";
+
 const signInScheme = z.object({
     email: z.string().email({ message: "E-mail inválido!"}),
     password: z.string().trim().min(1, {message: "Informe a senha!"})
@@ -24,6 +26,8 @@ export function SignIn() {
     //Já os parâmetros do "useActionState" são a função que iremos executar e conteúdo padrão que o "useActionState" tera respectivamente.
     const [state, formAction, isLoading] = useActionState(signIn, null);
 
+    const auth = useAuth();
+
     //prevState é o estado anterior do formulário e o formDate é ds dados do formulário
     async function signIn(_: any, formData : FormData) {
         try {
@@ -34,6 +38,7 @@ export function SignIn() {
 
             const response = await api.post("/sessions", data)
 
+            auth.save(response.data);
         } 
         catch (error) {
             console.log(error)
