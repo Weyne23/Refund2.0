@@ -9,11 +9,9 @@ import { ManagerRoutes } from "./ManagerRoutes";
 
 import { Loading } from "../Components/Loading";
 
-const isLoading = false;
-
 export function Routes() {
 
-    const { session } = useAuth();
+    const { session, isLoading } = useAuth();
 
     function Route() {
         switch (session?.user.role) {
