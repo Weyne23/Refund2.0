@@ -1,6 +1,10 @@
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router"
 
+import { api } from "../services/api"
+import { z, ZodError } from "zod"
+import { AxiosError } from "axios"
+
 import fileSvg from "../assets/file.svg"
 
 import { Input } from "../Components/Input"
@@ -9,6 +13,13 @@ import { Upload } from "../Components/Upload"
 import { Button } from "../Components/Button"
 
 import { CATEGORIES_KEYS, CATEGORIES } from "../utils/categories"
+
+
+const refundSchema = z.object({ 
+    name: z.string().min(3, { message: "Informe um nome claro para sua solicitação!" }),
+    category: z.string().min(1, {message: "Informe a categoria!"}),
+    amount: z.coerce.number({message: "Informe um valor válido"}).positive( { message: "informe um valor válido e superior a zero!"} )
+})
 
 export function Refund() {
     const [name, setName] = useState("");
@@ -20,13 +31,40 @@ export function Refund() {
     const navigate = useNavigate();
     const params = useParams<{id:string}>();
 
-    function onSubmit(e: React.FormEvent) {
+    async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
+
         if(params.id)
             return navigate(-1)
         //Aqui mando para pagina de confirm que a requisição foi via submit, mais explicação na pagina confirm
-        navigate("/confirm", { state: { fromSubmit: true }})
-        console.log(name, amount, category, isLoading, filename);
+
+        try{
+            setIsLoading(true);
+
+            const data = refundSchema.parse({
+                name,
+                category,
+                amount: amount.replace(",", ".")
+            })
+
+            await api.post("/refunds", {...data, filename: "123456789123456789123456.png"});
+
+            navigate("/confirm", { state: { fromSubmit: true }})
+        }
+        catch(error){
+            console.log(error);
+
+            if(error instanceof ZodError)
+                return alert(error.issues[0].message)
+
+            if(error instanceof AxiosError)
+                return alert(error.response?.data.message)
+
+            return alert("Erro ao fazer a solicitação de reembolso!")
+        }
+        finally{
+            setIsLoading(false)
+        }
     }
 
     return (
