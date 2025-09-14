@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router"
 
 import { api } from "../services/api"
@@ -13,7 +13,7 @@ import { Upload } from "../Components/Upload"
 import { Button } from "../Components/Button"
 
 import { CATEGORIES_KEYS, CATEGORIES } from "../utils/categories"
-
+import { formatCurrency } from "../utils/formatCurrency"
 
 const refundSchema = z.object({ 
     name: z.string().min(3, { message: "Informe um nome claro para sua solicitação!" }),
@@ -27,6 +27,7 @@ export function Refund() {
     const [category, setCategory] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [file, setFile] = useState<File | null>(null);
+    const [fileURL, setFileURL] = useState<string | null>(null);
 
     const navigate = useNavigate();
     const params = useParams<{id:string}>();
@@ -36,27 +37,27 @@ export function Refund() {
 
         if(params.id)
             return navigate(-1)
-        //Aqui mando para pagina de confirm que a requisição foi via submit, mais explicação na pagina confirm
-
+        
         try{
             setIsLoading(true);
-
+            
             if(!file)
                 return alert("Selecione um arquivo de comprovante!");
-
+            
             const fileUploadForm = new FormData();
             fileUploadForm.append("file", file);
-
+            
             const response = await api.post("/uploads", fileUploadForm);
-
+            
             const data = refundSchema.parse({
                 name,
                 category,
                 amount: amount.replace(",", "."),
             })
-
+            
             await api.post("/refunds", {...data, filename: response.data.filename});
-
+            
+            //Aqui mando para pagina de confirm que a requisição foi via submit, mais explicação na pagina confirm
             navigate("/confirm", { state: { fromSubmit: true }})
         }
         catch(error){
@@ -74,6 +75,30 @@ export function Refund() {
             setIsLoading(false)
         }
     }
+
+    async function fetchRefunds(id: string) {
+        try{
+            const { data } = await api.get<RefundAPIResponse>(`/refunds/${id}`);
+
+            setName(data.name);
+            setCategory(data.category);
+            setAmount(formatCurrency(data.amount));
+            setFileURL(data.filename);
+        } 
+        catch(error) {
+            console.log(error)
+
+            if(error instanceof AxiosError)
+                return alert(error.response?.data.message)
+            
+            alert("Erro ao carregar dados da solicitação, tente novamente!")
+        }
+    }
+
+    useEffect(() => { 
+        if(params.id)
+            fetchRefunds(params.id) 
+    }, [params.id])
 
     return (
         <form onSubmit={onSubmit} className="bg-gray-500 w-full rounded-xl flex flex-col p-10 gap-6 lg:min-w-[512px]">
@@ -98,11 +123,13 @@ export function Refund() {
 
             {
                 //o "_blank" em target serve para abrir o link em uma nova pagina
-                params.id ? (<a href="https://www.youtube.com/watch?v=XoodunTw0kw&list=RDXoodunTw0kw&start_radio=1" target="_blank" className="text-sm text-green-100 font-semibold flex items-center justify-center gap-2 my-6 hover:opacity-70 transition ease-linear">
-                    <img src={fileSvg} alt="Ícone de arquivo" />
-                    Abrir Comprovante
-                </a>) :
-                (<Upload filename= {file && file.name} onChange={(e) => e.target.files && setFile(e.target.files[0])}/>)
+                (params.id && fileURL) ? (
+                    <a href={`http://localhost:3333/uploads/${fileURL}`} target="_blank" className="text-sm text-green-100 font-semibold flex items-center justify-center gap-2 my-6 hover:opacity-70 transition ease-linear">
+                        <img src={fileSvg} alt="Ícone de arquivo" />
+                        Abrir Comprovante
+                    </a>) 
+                : (
+                    <Upload filename= {file && file.name} onChange={(e) => e.target.files && setFile(e.target.files[0])}/>)
             }
             <Button type="submit" isLoading={isLoading}>
                 {params.id ? "Voltar" : "Enviar" }
